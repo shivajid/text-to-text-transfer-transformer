@@ -1312,6 +1312,64 @@ class PreprocessorsTest(tf.test.TestCase):
             },
         ])
 
+  def test_rank_classification_with_weight_key(self):
+    dataset = tf.data.Dataset.from_tensors({
+        'left': 'the sky is blue',
+        'right': 'cats are so cute',
+        'label_idx': 1,
+        'weight': 1.0,
+    })
+    preprocessor = functools.partial(
+        prep.rank_classification,
+        dataset,
+        inputs_fn=lambda features: [features['right'], features['left']],
+        targets_fn=lambda features: ['class 0', 'class 1'],
+        label_key='label_idx',
+        weight_key='weight')
+
+    test_utils.assert_dataset(
+        preprocessor(mode='train'),
+        [
+            {
+                'idx': 0,
+                'inputs': 'the sky is blue',
+                'targets': 'class 1',
+                'is_correct': True,
+                'weight': 1,
+            }
+        ])
+
+    test_utils.assert_dataset(
+        preprocessor(mode='eval'),
+        [
+            {
+                'idx': 0,
+                'inputs': 'cats are so cute',
+                'targets': 'class 0',
+                'is_correct': False,
+                'weight': 1,
+            },
+            {
+                'idx': 0,
+                'inputs': 'the sky is blue',
+                'targets': 'class 1',
+                'is_correct': True,
+                'weight': 1,
+            }
+        ])
+
+    test_utils.assert_dataset(
+        preprocessor(mode='fewshot_eval'),
+        [
+            {
+                'idx': [0, 0],
+                'inputs': ['cats are so cute', 'the sky is blue'],
+                'targets': ['class 0', 'class 1'],
+                'is_correct': [False, True],
+                'weight': [1, 1],
+            },
+        ])
+
   def test_rank_classification_errors(self):
     dataset = tf.data.Dataset.from_tensors({
         'left': 'the sky is blue',

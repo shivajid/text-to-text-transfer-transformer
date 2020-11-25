@@ -38,8 +38,10 @@ def lower_text(string, **unused_kwargs):
   return string.lower()
 
 
-def string_label_to_class_id(
-    string_label, label_classes, default=-1, **unused_kwargs):
+def string_label_to_class_id(string_label,
+                             label_classes,
+                             default=-1,
+                             **unused_kwargs):
   """Returns index of string_label in label_classes or default if not found."""
   if string_label in label_classes:
     return label_classes.index(string_label)
@@ -50,8 +52,9 @@ def string_label_to_class_id(
 def multirc(string_label, example=None, is_target=False):
   """Returns dict containing the class with the question index for grouping."""
   res = {
-      "value": string_label_to_class_id(
-          string_label, example=example, label_classes=("False", "True"))
+      "value":
+          string_label_to_class_id(
+              string_label, example=example, label_classes=("False", "True"))
   }
   # Add the group, if present, since the model outputs will not have it.
   if is_target:
@@ -115,9 +118,34 @@ def wsc_simple(prediction, example=None, is_target=False):
   return int(predicted_referent)
 
 
-def rank_classification(score, example=None, is_target=False):
-  """A postprocessor for the `rank_classification` preprocessor and metric."""
+def rank_classification(score,
+                        example=None,
+                        is_target=False,
+                        pass_features=None):
+  """A postprocessor for the `rank_classification` preprocessor and metric.
+
+  Args:
+    score: A float scalar of score.
+    example: optional. A dictionary of features of an example.
+    is_target: If true, the function returns
+    pass_features: optional. A list of keys that specifies features to be
+      passed.
+
+  Returns:
+    If `is_target` is true, returns a tuple of the example index and a boolean
+    for prediction correctness. If `pass_features` is not None, returns a tuple
+    of the score and a dictionary of features to be passed. Otherwise, returns a
+    score.
+    A tuple
+
+  """
   if is_target:
     return (example["idx"], example["is_correct"])
   else:
-    return score
+    if pass_features and example is not None:
+      features = {}
+      for key in pass_features:
+        features[key] = example[key]
+      return score, features
+    else:
+      return score

@@ -67,12 +67,10 @@ class PostprocessorsTest(absltest.TestCase):
                 "answers": [b"a1", b"a2"],
                 "context": b"Full context"
             },
-            is_target=True
-        ),
-        {
-            "answers": ["a1", "a2"],
-            "context": "Full context"
-        })
+            is_target=True), {
+                "answers": ["a1", "a2"],
+                "context": "Full context"
+            })
 
     self.assertEqual(
         postprocessors.span_qa("answer", is_target=False), "answer")
@@ -122,13 +120,26 @@ class PostprocessorsTest(absltest.TestCase):
             is_target=False), 1)
 
   def test_rank_classification(self):
+    self.assertEqual(postprocessors.rank_classification(-13.4), -13.4)
+
+  def test_rank_classification_is_target(self):
     self.assertEqual(
         postprocessors.rank_classification(
-            "blah", example={"is_correct": False, "idx": 10}, is_target=True),
-        (10, False))
+            "blah", example={
+                "is_correct": False,
+                "idx": 10
+            }, is_target=True), (10, False))
+
+  def test_rank_classification_pass_features(self):
     self.assertEqual(
-        postprocessors.rank_classification(-13.4),
-        -13.4)
+        postprocessors.rank_classification(
+            -13.4, example={
+                "foo": 0,
+                "bar": 1
+            }, pass_features=["foo"]), (-13.4, {
+                "foo": 0
+            }))
+
 
 if __name__ == "__main__":
   absltest.main()
